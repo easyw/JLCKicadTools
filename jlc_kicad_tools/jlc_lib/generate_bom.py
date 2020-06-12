@@ -40,11 +40,13 @@ def GenerateBOM(input_filename, output_filename, opts):
   grouped = net.groupComponents()
 
   num_groups_found = 0
+  DNP_footprints = []
   for group in grouped:
     refs = []
     lcsc_part_numbers = set()
     lcsc_part_numbers_none_found = False
     footprints = set()
+    #DNP_footprints = []
 
     for component in group:
       refs.append(component.getRef())
@@ -61,6 +63,12 @@ def GenerateBOM(input_filename, output_filename, opts):
       if lcsc_part_number:
         lcsc_part_numbers.add(lcsc_part_number)
       else:
+        if c.getFootprint() != '':
+            print(c.getFootprint(),c.getRef())
+            #print(c.getFootprint() not in str(DNP_footprints))
+            if c.getFootprint() not in str(DNP_footprints):
+                DNP_footprints.append(c.getFootprint())
+                print(DNP_footprints)
         lcsc_part_numbers_none_found = True
 
       if c.getFootprint() != '':
@@ -94,7 +102,10 @@ def GenerateBOM(input_filename, output_filename, opts):
           footprints = ", ".join(footprints)))
       return False
     footprint = list(footprints)[0]
-
+    print(DNP_footprints, len(DNP_footprints))
+    #DNP_footprint = list(DNP_footprints)[0]
+    print(list(DNP_footprints))
+    
     # They don't seem to like ':' in footprint names.
     footprint = footprint[(footprint.find(':') + 1):]
 

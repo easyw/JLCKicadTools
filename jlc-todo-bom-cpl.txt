@@ -1,0 +1,8 @@
+1) parameters: switch from DIR name to project name
+2) teh script is relying on an XML net file... a BOM needs to be generated to create/update a XML file before launching the tool
+3) the tool is creating a CPL placement file with only JLC code parts; this is fine to have a list of ONLY JLC parts for assembling w JLC service
+   (also rotation will be adjusted following the csv DB)
+4) TBD a script to remove Paste pads from the JLC DNF SMD footprints
+
+references @
+https://dubiouscreations.com/2019/10/21/using-kicad-with-jlcpcb-assembly-service/
