@@ -20,6 +20,7 @@ from jlc_kicad_tools.jlc_lib import kicad_netlist_reader
 import csv
 import re
 import logging
+import os
 
 LCSC_PART_NUMBER_MATCHER=re.compile('^C[0-9]+$')
 
@@ -28,13 +29,28 @@ def GenerateBOM(input_filename, output_filename, opts):
 
   try:
     f = open(output_filename, mode='w', encoding='utf-8')
+    #print(output_filename)
+    #fp_output_filename = output_filename.rstrip("_bom_jlc.csv")+"_fp_jlc.txt"
+    fp_output_filename = output_filename[:-12]+"_fp_jlc.txt"
+    print(fp_output_filename)
+    #pcb_input_filename = output_filename[:-12]+".kicad_pcb"
+    #print(pcb_input_filename)
+    #pcb_output_filename = output_filename[:-12]+"-no-paste.txt"
+    #print(pcb_output_filename)
+    #fpcb_in = open(pcb_input_filename, mode='r', encoding='utf-8')
+    #fpcb_out = open(pcb_output_filename, mode='w', encoding='utf-8')
+    
+    ffp = open(fp_output_filename, mode='w', encoding='utf-8')
+    
   except IOError:
     logging.error("Failed to open file for writing: {}".format(output_filename))
     return False
 
   out = csv.writer(f, lineterminator='\n', delimiter=',', quotechar='\"',
                    quoting=csv.QUOTE_ALL)
-
+  fp_out = csv.writer(ffp, lineterminator='\n', delimiter=',', quotechar='\"',
+                   quoting=csv.QUOTE_ALL)
+  
   out.writerow(['Comment', 'Designator', 'Footprint', 'LCSC Part #'])
 
   grouped = net.groupComponents()
@@ -64,11 +80,14 @@ def GenerateBOM(input_filename, output_filename, opts):
         lcsc_part_numbers.add(lcsc_part_number)
       else:
         if c.getFootprint() != '':
-            print(c.getFootprint(),c.getRef())
+            #print(c.getFootprint(),c.getRef())
             #print(c.getFootprint() not in str(DNP_footprints))
             if c.getFootprint() not in str(DNP_footprints):
                 DNP_footprints.append(c.getFootprint())
-                print(DNP_footprints)
+                #print(DNP_footprints)
+                #fp_out.writerow([c.getRef(),c.getFootprint()])
+                fp_out.writerow([c.getFootprint()])
+                #ffp.write(str([c.getFootprint()]))
         lcsc_part_numbers_none_found = True
 
       if c.getFootprint() != '':
@@ -102,9 +121,9 @@ def GenerateBOM(input_filename, output_filename, opts):
           footprints = ", ".join(footprints)))
       return False
     footprint = list(footprints)[0]
-    print(DNP_footprints, len(DNP_footprints))
+    #print(DNP_footprints, len(DNP_footprints))
     #DNP_footprint = list(DNP_footprints)[0]
-    print(list(DNP_footprints))
+    #print(list(DNP_footprints))
     
     # They don't seem to like ':' in footprint names.
     footprint = footprint[(footprint.find(':') + 1):]
@@ -115,4 +134,84 @@ def GenerateBOM(input_filename, output_filename, opts):
 
   logging.info("{} component groups found from BOM file.".format(num_groups_found))
 
+  return True
+
+  
+def removePaste(input_filename):
+  try:
+    #print(output_filename)
+    #fp_output_filename = output_filename.rstrip("_bom_jlc.csv")+"_fp_jlc.txt"
+    #print(input_filename)
+    fp_input_filename = input_filename[:-4]+"_fp_jlc.txt"
+    #print(input_filename)
+    #print(fp_input_filename)
+    pcb_input_filename = input_filename[:-4]+".kicad_pcb"
+    #print(input_filename)
+    #print(pcb_input_filename)
+    pcb_output_filename = input_filename[:-4]+"-jlc-no-paste.kicad_pcb"
+    #print(input_filename)
+    #print(pcb_output_filename)
+    fp_in = open(fp_input_filename, mode='r', encoding='utf-8')
+    fpcb_in = open(pcb_input_filename, mode='r', encoding='utf-8')
+    fpcb_out = open(pcb_output_filename, mode='w', encoding='utf-8')
+    #ffp = open(fp_output_filename, mode='w', encoding='utf-8')
+    
+  except IOError:
+    logging.error("Failed to open file for writing: {}".format(pcb_output_filename))
+    return False
+  
+  footprints=[] #""
+  for j, fp in enumerate(fp_in):
+  #  print(j, fp.replace("\"",""))
+    #footprints+=fp.replace("\"","")+';'
+    footprints.append(fp.replace("\"","")[:-1])
+  #print(footprints)
+  fp_found=False
+  fp_SMD=False
+  #for fp in footprints:
+  pcb_lines=[]
+  for i, line in enumerate(fpcb_in):
+    pcb_lines.append(line)
+  
+  #for i, line in enumerate(fpcb_in):
+  i = 0
+  no_paste_fps=0
+  while i < len(pcb_lines)-1:
+    line = pcb_lines[i]
+    j=i
+    #for fp in footprints:
+    if line.startswith("  (module "):
+        #if "a_SMD_DIODE-TR:SOT-23-5" in line:
+        for fp in footprints:
+            if fp in line:
+                #print("fp found", fp, line)
+                fp_found=True
+                fp_SMD=False
+            if fp_found==True:
+                pcb_out = fpcb_out.write(line)
+                end_reached = False
+                while (end_reached == False) and (i < len(pcb_lines)):
+                    i+=1
+                    line = pcb_lines[i]
+                    if line.startswith("    (attr smd)") and fp_found==True:
+                        fp_SMD=True
+                        no_paste_fps+=1
+                    if line.startswith("    (pad") and fp_SMD==True and fp_found==True:
+                        line = line.replace(" F.Paste","")
+                    if line.startswith("  )"): # and fp_SMD==True:
+                        fp_found=False
+                        fp_SMD=False
+                        end_reached = True
+                    pcb_out = fpcb_out.write(line)
+    if j==i:
+        pcb_out = fpcb_out.write(line)
+    i+=1
+    #print (i,line)
+  pcb_out = fpcb_out.write('  (gr_text "JLC NO PASTE PCB FILE!!!" (at 186.583 300.962) (layer Cmts.User)'+os.linesep)
+  pcb_out = fpcb_out.write('    (effects (font (size 15 15) (thickness 1.0)))'+os.linesep)
+  pcb_out = fpcb_out.write('  )'+os.linesep)
+  pcb_out = fpcb_out.write(')'+os.linesep)
+  print(pcb_output_filename,'written')
+  print("removed Paste on ",no_paste_fps,"footprints")
+    
   return True
