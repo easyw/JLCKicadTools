@@ -31,9 +31,11 @@ def GenerateBOM(input_filename, output_filename, opts):
 
   try:
     f = open(output_filename, mode='w', encoding='utf-8')
+    f2 = open(output_filename, mode='w', encoding='utf-8')
     #print(output_filename)
     #fp_output_filename = output_filename.rstrip("_bom_jlc.csv")+"_fp_jlc.txt"
     fp_output_filename = output_filename[:-12]+"_fp_jlc.txt"
+    log_output_filename = output_filename[:-12]+"_log_jlc.txt"
     print(fp_output_filename)
     #pcb_input_filename = output_filename[:-12]+".kicad_pcb"
     #print(pcb_input_filename)
@@ -145,19 +147,22 @@ def removePaste(input_filename):
     #fp_output_filename = output_filename.rstrip("_bom_jlc.csv")+"_fp_jlc.txt"
     #print(input_filename)
     fp_input_filename = input_filename[:-4]+"_fp_jlc.txt"
+    
     #print(input_filename)
     #print(fp_input_filename)
     pcb_input_filename = input_filename[:-4]+".kicad_pcb"
     #print(input_filename)
     #print(pcb_input_filename)
     pcb_output_filename = input_filename[:-4]+"-jlc-no-paste.kicad_pcb"
+    log_output_filename = input_filename[:-4]+"-log.txt"
     #print(input_filename)
     #print(pcb_output_filename)
     fp_in = open(fp_input_filename, mode='r', encoding='utf-8')
     fpcb_in = open(pcb_input_filename, mode='r', encoding='utf-8')
     fpcb_out = open(pcb_output_filename, mode='w', encoding='utf-8')
+    log_out  = open(log_output_filename, mode='w', encoding='utf-8')
     #ffp = open(fp_output_filename, mode='w', encoding='utf-8')
-    
+    log_out_file = log_out.write('jlc tool version '+VERSION+'\n')
   except IOError:
     logging.error("Failed to open file for writing: {}".format(pcb_output_filename))
     return False
@@ -223,6 +228,7 @@ def removePaste(input_filename):
                                 no_paste_fps+=1
                                 rf_search = "already counted"
                                 print('removing F.Paste on '+rf)
+                                log_out_file = log_out.write('removing F.Paste on '+rf+'\n')
                     if line.startswith("  )"): # and fp_SMD==True:
                         rf_found=False
                         fp_SMD=False
@@ -253,11 +259,12 @@ def removePaste(input_filename):
         pcb_out = fpcb_out.write(line)
     i+=1
     #print (i,line)
-  pcb_out = fpcb_out.write('  (gr_text "JLC NO PASTE PCB FILE!!!" (at 186.583 300.962) (layer Cmts.User)'+os.linesep)
-  pcb_out = fpcb_out.write('    (effects (font (size 15 15) (thickness 1.0)))'+os.linesep)
-  pcb_out = fpcb_out.write('  )'+os.linesep)
-  pcb_out = fpcb_out.write(')'+os.linesep)
+  pcb_out = fpcb_out.write('  (gr_text "JLC NO PASTE PCB FILE!!!" (at 186.583 300.962) (layer Cmts.User)'+'\n')
+  pcb_out = fpcb_out.write('    (effects (font (size 15 15) (thickness 1.0)))'+'\n')
+  pcb_out = fpcb_out.write('  )'+'\n')
+  pcb_out = fpcb_out.write(')'+'\n')
   print(pcb_output_filename,'written')
+  log_out_file = log_out.write(pcb_output_filename+' written'+'\n')
   print("removed Paste on ",no_paste_fps,"footprints")
-    
+  log_out_file = log_out.write("removed Paste on "+ str(no_paste_fps) +" footprints"+'\n')
   return True

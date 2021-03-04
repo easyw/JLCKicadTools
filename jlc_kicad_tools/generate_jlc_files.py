@@ -24,7 +24,7 @@ import logging
 import errno
 
 from jlc_kicad_tools.jlc_lib.cpl_fix_rotations import ReadDB, FixRotations
-from jlc_kicad_tools.jlc_lib.generate_bom import GenerateBOM
+from jlc_kicad_tools.jlc_lib.generate_bom import GenerateBOM, removePaste
 
 DEFAULT_DB_PATH="cpl_rotations_db.csv"
 
@@ -97,7 +97,8 @@ def main():
 	cpl_output_path = os.path.join(opts.output_dir, project_name + "_cpl_jlc.csv")
 
 	db = ReadDB(opts.database)
-	if GenerateBOM(netlist_path, bom_output_path, opts) and FixRotations(cpl_path, cpl_output_path, db):
+	if GenerateBOM(netlist_path, bom_output_path, opts) and FixRotations(cpl_path, cpl_output_path, db) \
+       and removePaste(netlist_path):
 		logging.info("JLC BOM file written to: {}".format(bom_output_path))
 		logging.info("JLC CPL file written to: {}".format(cpl_output_path))
 	else:
