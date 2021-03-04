@@ -22,6 +22,8 @@ import re
 import logging
 import os
 
+VERSION = "1.1.0 March 2021"
+
 LCSC_PART_NUMBER_MATCHER=re.compile('^C[0-9]+$')
 
 def GenerateBOM(input_filename, output_filename, opts):
@@ -85,8 +87,8 @@ def GenerateBOM(input_filename, output_filename, opts):
             if c.getFootprint() not in str(DNP_footprints):
                 DNP_footprints.append(c.getFootprint())
                 #print(DNP_footprints)
-                #fp_out.writerow([c.getRef(),c.getFootprint()])
-                fp_out.writerow([c.getFootprint()])
+                fp_out.writerow([c.getRef(),c.getFootprint()])
+                # fp_out.writerow([c.getFootprint()])
                 #ffp.write(str([c.getFootprint()]))
         lcsc_part_numbers_none_found = True
 
@@ -161,12 +163,20 @@ def removePaste(input_filename):
     return False
   
   footprints=[] #""
+  references=[]
   for j, fp in enumerate(fp_in):
   #  print(j, fp.replace("\"",""))
     #footprints+=fp.replace("\"","")+';'
-    footprints.append(fp.replace("\"","")[:-1])
+    temp_ref_fp=fp.split("\",\"")
+    # print(temp_ref_fp)
+    # print(temp_ref_fp[0].replace("\"",""))
+    # print(temp_ref_fp[1].replace("\"","")[:-1])
+    references.append(temp_ref_fp[0].replace("\"",""))
+    footprints.append(temp_ref_fp[1].replace("\"","")[:-1])
+    #footprints.append(fp.replace("\"","")[:-1])
   #print(footprints)
   fp_found=False
+  rf_found=False
   fp_SMD=False
   #for fp in footprints:
   pcb_lines=[]
@@ -180,29 +190,65 @@ def removePaste(input_filename):
     line = pcb_lines[i]
     j=i
     #for fp in footprints:
-    if line.startswith("  (module "):
+    if line.startswith("    (fp_text reference"): #("  (module "):
         #if "a_SMD_DIODE-TR:SOT-23-5" in line:
-        for fp in footprints:
-            if fp in line:
-                #print("fp found", fp, line)
-                fp_found=True
+        # print (line)
+        for rf in references:
+            #print (rf, line)
+            if (" "+rf+" ") in line: #found reference
+                # print("ref found", rf, line)
+                rf_found=True
                 fp_SMD=False
-            if fp_found==True:
+            if (" \""+rf+"\" ") in line: #found "reference"
+                # print("ref found", rf, line)
+                rf_found=True
+                fp_SMD=False
+            rf_search = rf
+            if rf_found==True:
                 pcb_out = fpcb_out.write(line)
                 end_reached = False
+                # print('checking for '+rf)
                 while (end_reached == False) and (i < len(pcb_lines)):
                     i+=1
                     line = pcb_lines[i]
-                    if line.startswith("    (attr smd)") and fp_found==True:
-                        fp_SMD=True
-                        no_paste_fps+=1
-                    if line.startswith("    (pad") and fp_SMD==True and fp_found==True:
-                        line = line.replace(" F.Paste","")
+                    # if line.startswith("    (attr smd)") and rf_found==True:
+                    #     fp_SMD=True
+                    #     no_paste_fps+=1
+                    #if line.startswith("    (pad") and fp_SMD==True and rf_found==True:
+                    if line.startswith("    (pad") and rf_found==True:
+                        if " F.Paste" in line:
+                            fp_SMD=True
+                            line = line.replace(" F.Paste","")
+                            if rf == rf_search:
+                                no_paste_fps+=1
+                                rf_search = "already counted"
+                                print('removing F.Paste on '+rf)
                     if line.startswith("  )"): # and fp_SMD==True:
-                        fp_found=False
+                        rf_found=False
                         fp_SMD=False
                         end_reached = True
                     pcb_out = fpcb_out.write(line)
+        ## for fp in footprints:
+        ##     if fp in line:
+        ##         #print("fp found", fp, line)
+        ##         fp_found=True
+        ##         fp_SMD=False
+        ##     if fp_found==True:
+        ##         pcb_out = fpcb_out.write(line)
+        ##         end_reached = False
+        ##         while (end_reached == False) and (i < len(pcb_lines)):
+        ##             i+=1
+        ##             line = pcb_lines[i]
+        ##             if line.startswith("    (attr smd)") and fp_found==True:
+        ##                 fp_SMD=True
+        ##                 no_paste_fps+=1
+        ##             if line.startswith("    (pad") and fp_SMD==True and fp_found==True:
+        ##                 line = line.replace(" F.Paste","")
+        ##             if line.startswith("  )"): # and fp_SMD==True:
+        ##                 fp_found=False
+        ##                 fp_SMD=False
+        ##                 end_reached = True
+        ##             pcb_out = fpcb_out.write(line)
     if j==i:
         pcb_out = fpcb_out.write(line)
     i+=1
