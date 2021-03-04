@@ -22,3 +22,4 @@
 "^SSOP-28_5.3x10.2mm_P0.65mm",-90
 "^sc70-GSD",-90
 "^CP_EIA-7343-31_Kemet-D",180
+"^Texas_HTSOP-(?!18_)",270
