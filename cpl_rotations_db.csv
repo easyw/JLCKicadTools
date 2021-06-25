@@ -23,3 +23,5 @@
 "^sc70-GSD",-90
 "^CP_EIA-7343-31_Kemet-D",180
 "^Texas_HTSOP-(?!18_)",270
+"^SMDIP-4_W9.53mm",270
+"^Relay_DPDT_Omron_G6K-2F",270

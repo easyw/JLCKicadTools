@@ -1,0 +1,21 @@
+﻿NB: utilizzare la richiesta di verifica durante la fase di ordine per la produzione SMD per avere l'analisi
+    dei componenti in uso
+
+vedere in C:\Cad\Progetti_K\a_tools\jlc_kicad_tools
+NB aggiungere i tooling holes and il marker JLCJLCJLCJLC
+NB creare:
+   - la netlist prima del lancio 
+   - il BOM per generare l'XML
+   - i file pos
+NB aggiornare il DB delle rotazione se nuovi componenti:
+   - C:\Python3\Lib\site-packages\jlc_kicad_tools\cpl_rotations_db.csv
+
+lanciare il bat o il comando:
+C:\Python3\python C:\Python3\Lib\site-packages\jlc_kicad_tools  C:\Temp\Audio-Mux-dev
+C:\Python3\python C:\Python3\Lib\site-packages\jlc_kicad_tools C:\Cad\Progetti_K\eth-pb-lcd\eth-pb-lcd-uc
+
+Note:
+1) il pacchetto jlc_kicad_tools (modificato mau) deve essere installato in C:\Python3\Lib\site-packages\jlc_kicad_tools 
+2) la cartella si deve chiamare come il file '.pro'
+
+C:\Python3\python C:\Python3\Lib\site-packages\jlc_kicad_tools\generate_jlc_files.py C:\Cad\Progetti_K\infomat\SB66xx-Main-v1_5
